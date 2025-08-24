@@ -60,7 +60,6 @@ services:
   sidekiq:
     # ALTERAÇÃO 1: Usar a mesma imagem customizada
     image: chatwoot-custom:latest
-    pull_policy: always
     volumes:
       - 'storage:/app/storage'
     depends_on:
@@ -137,7 +136,6 @@ services:
       retries: 10
   baileys-api:
     image: 'ghcr.io/fazer-ai/baileys-api:latest'
-    pull_policy: always
     volumes:
       - 'storage:/app/storage'
     environment:
