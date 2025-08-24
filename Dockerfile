@@ -1,8 +1,8 @@
-# Dockerfile v6 - A Abordagem Direta
+# Dockerfile v7 - Copiando scripts customizados
 FROM ghcr.io/fazer-ai/chatwoot:latest
 
-# Diagnóstico final: A imagem base não tem NENHUMA ferramenta de build (nem curl, nem npm).
-# Solução: Usar o gerenciador de pacotes do sistema (apk) para instalar
-# o pnpm diretamente do repositório oficial do Alpine.
-# Simples, limpo e sem dependências ocultas.
+# Instalar o pnpm diretamente usando o gerenciador de pacotes do sistema
 RUN apk add --no-cache pnpm
+
+# Copiar a pasta 'deployment' (que contém nosso script) para dentro da imagem
+COPY deployment/ /app/deployment/
