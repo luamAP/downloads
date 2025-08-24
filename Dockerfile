@@ -1,7 +1,8 @@
-# Dockerfile v5 - Instalando pnpm via npm (método mais robusto)
+# Dockerfile v6 - A Abordagem Direta
 FROM ghcr.io/fazer-ai/chatwoot:latest
 
-# O script de instalação do pnpm falhou.
-# Em vez disso, vamos usar o npm, que já vem na imagem, para instalar o pnpm globalmente.
-# Esta é a forma padrão de instalar ferramentas de linha de comando do Node.js.
-RUN npm install -g pnpm
+# Diagnóstico final: A imagem base não tem NENHUMA ferramenta de build (nem curl, nem npm).
+# Solução: Usar o gerenciador de pacotes do sistema (apk) para instalar
+# o pnpm diretamente do repositório oficial do Alpine.
+# Simples, limpo e sem dependências ocultas.
+RUN apk add --no-cache pnpm
