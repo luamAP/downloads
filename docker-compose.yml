@@ -32,22 +32,23 @@ services:
       - 'RESEND_API_KEY=${RESEND_API_KEY}'
       - 'BRAND_ASSETS_URL=${BRAND_ASSETS_URL}'
     entrypoint: docker/entrypoints/rails.sh
-    command:
-      - bundle
-      - exec
-      - rails
-      - s
-      - '-p'
-      - '3000'
-      - '-b'
-      - 0.0.0.0
+    command: >
+      sh -c "
+        echo '🚀 Waiting for database to be ready...'
+        /app/docker/wait-for-postgres.sh
+        echo '👟 Preparing database...'
+        bundle exec rails db:chatwoot_prepare
+        echo '🎨 Applying custom branding...'
+        bundle exec rails branding:update
+        deployment/extract_brand_assets.sh
+        echo '🧹 Cleaning old assets...'
+        bundle exec rails assets:clobber
+        echo '📦 Compiling new assets (this will take a while)...'
+        bundle exec rails assets:precompile RAILS_ENV=production
+        echo '✅ All setup steps complete. Starting Chatwoot server...'
+        exec bundle exec rails s -p 3000 -b 0.0.0.0
+      "
     restart: always
-    post_start:
-      -
-        command:
-          - sh
-          - '-c'
-          - 'bundle exec rails db:chatwoot_prepare && bundle exec rails branding:update && deployment/extract_brand_assets.sh && bundle exec rails assets:clobber && bundle exec rails assets:precompile RAILS_ENV=production'
     healthcheck:
       test:
         - CMD-SHELL
