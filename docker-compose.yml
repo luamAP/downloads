@@ -44,7 +44,8 @@ services:
         echo '🧹 Cleaning old assets...'
         bundle exec rails assets:clobber
         echo '📦 Compiling new assets (this will take a while)...'
-        bundle exec rails assets:precompile RAILS_ENV=production
+        # ADICIONE A LINHA ABAIXO:
+        NODE_OPTIONS=--max-old-space-size=4096 bundle exec rails assets:precompile RAILS_ENV=production
         echo '✅ All setup steps complete. Starting Chatwoot server...'
         exec bundle exec rails s -p 3000 -b 0.0.0.0
       "
