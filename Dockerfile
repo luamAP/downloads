@@ -6,3 +6,6 @@ RUN apk add --no-cache pnpm
 
 # Copiar a pasta 'deployment' (que contém nosso script) para dentro da imagem
 COPY deployment/ /app/deployment/
+
+# TORNAR O SCRIPT EXECUTÁVEL
+RUN chmod +x /app/deployment/extract_brand_assets.sh

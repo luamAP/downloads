@@ -4,7 +4,6 @@ services:
     # ALTERAÇÃO 1: Construir a imagem localmente usando nosso Dockerfile
     build: .
     image: chatwoot-custom:latest
-    pull_policy: always
     volumes:
       - 'storage:/app/storage'
     depends_on:
