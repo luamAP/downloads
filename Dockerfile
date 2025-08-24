@@ -1,11 +1,7 @@
-# Dockerfile v4 - Corrigindo o instalador do pnpm
+# Dockerfile v5 - Instalando pnpm via npm (método mais robusto)
 FROM ghcr.io/fazer-ai/chatwoot:latest
 
-# O instalador do pnpm precisa saber qual shell está ativo.
-# Definimos a variável SHELL=sh explicitamente para o comando.
-RUN apk add --no-cache curl && \
-    SHELL=sh curl -fsSL https://get.pnpm.io/install.sh | sh -
-
-# O resto continua igual
-ENV PNPM_HOME="/root/.local/share/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+# O script de instalação do pnpm falhou.
+# Em vez disso, vamos usar o npm, que já vem na imagem, para instalar o pnpm globalmente.
+# Esta é a forma padrão de instalar ferramentas de linha de comando do Node.js.
+RUN npm install -g pnpm
