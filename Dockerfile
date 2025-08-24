@@ -1,13 +1,8 @@
-# Usar a imagem do fork como base
+# Dockerfile CORRIGIDO E SIMPLIFICADO
 FROM ghcr.io/fazer-ai/chatwoot:latest
 
-# Mudar para o usuário root para instalar pacotes
-USER root
-
-# Instalar o pnpm e configurar o PATH para que o sistema o encontre
+# Comandos 'RUN' são executados como root por padrão, o que é perfeito para instalar software.
+# Nós apenas instalamos o pnpm e deixamos a imagem base cuidar da definição do usuário final.
 RUN curl -fsSL https://get.pnpm.io/install.sh | sh -
 ENV PNPM_HOME="/root/.local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-
-# Retornar ao usuário padrão do chatwoot
-USER chatwoot
