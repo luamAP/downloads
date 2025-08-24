@@ -37,14 +37,14 @@ services:
       - '-b'
       - 0.0.0.0
     restart: always
-    post_start:
-      - command:
-          - sh
-          - '-c'
-          - >
-            bundle exec rails db:chatwoot_prepare &&
-            bundle exec rails branding:update &&
-            if [ -n "$${BRAND_ASSETS_URL}" ]; then deployment/extract_brand_assets.sh "$${BRAND_ASSETS_URL}"; fi
+    #post_start:
+    #  - command:
+    #     - sh
+    #     - '-c'
+    #     - >
+    #       bundle exec rails db:chatwoot_prepare &&
+    #       bundle exec rails branding:update &&
+    #       if [ -n "$${BRAND_ASSETS_URL}" ]; then deployment/extract_brand_assets.sh "$${BRAND_ASSETS_URL}"; fi
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- --header=\"Accept: text/html\" http://127.0.0.1:3000/"]
       interval: 60s
