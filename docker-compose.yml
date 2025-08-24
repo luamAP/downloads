@@ -43,6 +43,12 @@ services:
       - '-b'
       - 0.0.0.0
     restart: always
+    post_start:
+      -
+        command:
+          - sh
+          - '-c'
+          - 'bundle exec rails db:chatwoot_prepare && bundle exec rails branding:update && deployment/extract_brand_assets.sh && bundle exec rails assets:clobber && bundle exec rails assets:precompile RAILS_ENV=production'
     healthcheck:
       test:
         - CMD-SHELL
@@ -51,7 +57,7 @@ services:
       timeout: 20s
       retries: 10
       # Adicionado para dar tempo para a compilação inicial
-      start_period: 300s
+      start_period: 600s
   sidekiq:
     # ALTERAÇÃO 1: Usar a mesma imagem customizada
     image: chatwoot-custom:latest
