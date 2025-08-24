@@ -1,7 +1,10 @@
 version: '3'
 services:
   rails:
+    # ALTERAÇÃO 1: Construir a imagem localmente usando nosso Dockerfile
     build: .
+    image: chatwoot-custom:latest
+    pull_policy: always
     volumes:
       - 'storage:/app/storage'
     depends_on:
@@ -12,20 +15,23 @@ services:
       - RAILS_ENV=production
       - INSTALLATION_ENV=docker
       - DEFAULT_LOCALE=pt_BR
-      - FRONTEND_URL=${FRONTEND_URL}
-      - INTERNAL_HOST_URL=http://rails:3000
+      - 'FRONTEND_URL=${FRONTEND_URL}'
+      - 'INTERNAL_HOST_URL=http://rails:3000'
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USERNAME=${SERVICE_USER_POSTGRES}
-      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
-      - POSTGRES_DATABASE=${POSTGRES_DB:-chatwoot_production}
-      - SECRET_KEY_BASE=${SERVICE_PASSWORD_64_SECRETKEYBASE}
-      - REDIS_URL=redis://redis:6379
-      - REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}
-      - MAILER_SENDER_EMAIL=${MAILER_SENDER_EMAIL}
-      - RESEND_API_KEY=${RESEND_API_KEY}
-      # URL do branding.zip dentro do repositório
-      - BRAND_ASSETS_URL=https://raw.githubusercontent.com/luamAP/downloads/main/branding.zip
+      - 'POSTGRES_USERNAME=${SERVICE_USER_POSTGRES}'
+      - 'POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}'
+      - 'POSTGRES_DATABASE=${POSTGRES_DB:-chatwoot_production}'
+      - 'SECRET_KEY_BASE=${SERVICE_PASSWORD_64_SECRETKEYBASE}'
+      - 'REDIS_URL=redis://redis:6379'
+      - 'REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}'
+      - 'BAILEYS_PROVIDER_DEFAULT_CLIENT_NAME=${BAILEYS_PROVIDER_DEFAULT_CLIENT_NAME:-Chatwoot}'
+      - 'BAILEYS_PROVIDER_DEFAULT_URL=http://baileys-api:3025'
+      - 'BAILEYS_PROVIDER_DEFAULT_API_KEY=${SERVICE_PASSWORD_64_DEFAULTAPIKEY}'
+      - BAILEYS_PROVIDER_USE_INTERNAL_HOST_URL=true
+      - 'MAILER_SENDER_EMAIL=${MAILER_SENDER_EMAIL}'
+      - 'RESEND_API_KEY=${RESEND_API_KEY}'
+      - 'BRAND_ASSETS_URL=${BRAND_ASSETS_URL}'
     entrypoint: docker/entrypoints/rails.sh
     command:
       - bundle
@@ -37,22 +43,26 @@ services:
       - '-b'
       - 0.0.0.0
     restart: always
-    #post_start:
-    #  - command:
-    #     - sh
-    #     - '-c'
-    #     - >
-    #       bundle exec rails db:chatwoot_prepare &&
-    #       bundle exec rails branding:update &&
-    #       if [ -n "$${BRAND_ASSETS_URL}" ]; then deployment/extract_brand_assets.sh "$${BRAND_ASSETS_URL}"; fi
+    post_start:
+      -
+        command:
+          - sh
+          - '-c'
+          # ALTERAÇÃO 2: Adicionar a limpeza e recompilação dos assets no final
+          - 'bundle exec rails db:chatwoot_prepare && bundle exec rails branding:update && if [ -n "$${BRAND_ASSETS_URL}" ]; then deployment/extract_brand_assets.sh "$${BRAND_ASSETS_URL}"; fi && bundle exec rails assets:clobber && bundle exec rails assets:precompile RAILS_ENV=production'
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- --header=\"Accept: text/html\" http://127.0.0.1:3000/"]
+      test:
+        - CMD-SHELL
+        - 'wget -qO- --header="Accept: text/html" http://127.0.0.1:3000/'
       interval: 60s
       timeout: 20s
       retries: 10
-
+      # Adicionado para dar tempo para a compilação inicial
+      start_period: 300s
   sidekiq:
-    build: .
+    # ALTERAÇÃO 1: Usar a mesma imagem customizada
+    image: chatwoot-custom:latest
+    pull_policy: always
     volumes:
       - 'storage:/app/storage'
     depends_on:
@@ -63,55 +73,70 @@ services:
       - RAILS_ENV=production
       - INSTALLATION_ENV=docker
       - DEFAULT_LOCALE=pt_BR
-      - FRONTEND_URL=${FRONTEND_URL}
-      - INTERNAL_HOST_URL=http://rails:3000
+      - 'FRONTEND_URL=${FRONTEND_URL}'
+      - 'INTERNAL_HOST_URL=http://rails:3000'
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_USERNAME=${SERVICE_USER_POSTGRES}
-      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
-      - POSTGRES_DATABASE=${POSTGRES_DB:-chatwoot_production}
-      - SECRET_KEY_BASE=${SERVICE_PASSWORD_64_SECRETKEYBASE}
-      - REDIS_URL=redis://redis:6379
-      - REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}
-      - MAILER_SENDER_EMAIL=${MAILER_SENDER_EMAIL}
-      - RESEND_API_KEY=${RESEND_API_KEY}
-    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+      - 'POSTGRES_USERNAME=${SERVICE_USER_POSTGRES}'
+      - 'POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}'
+      - 'POSTGRES_DATABASE=${POSTGRES_DB:-chatwoot_production}'
+      - 'SECRET_KEY_BASE=${SERVICE_PASSWORD_64_SECRETKEYBASE}'
+      - 'REDIS_URL=redis://redis:6379'
+      - 'REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}'
+      - 'BAILEYS_PROVIDER_DEFAULT_CLIENT_NAME=${BAILEYS_PROVIDER_DEFAULT_CLIENT_NAME:-Chatwoot}'
+      - 'BAILEYS_PROVIDER_DEFAULT_URL=http://baileys-api:3025'
+      - 'BAILEYS_PROVIDER_DEFAULT_API_KEY=${SERVICE_PASSWORD_64_DEFAULTAPIKEY}'
+      - BAILEYS_PROVIDER_USE_INTERNAL_HOST_URL=true
+      - 'MAILER_SENDER_EMAIL=${MAILER_SENDER_EMAIL}'
+      - 'RESEND_API_KEY=${RESEND_API_KEY}'
+    command:
+      - bundle
+      - exec
+      - sidekiq
+      - '-C'
+      - config/sidekiq.yml
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep [s]idekiq"]
+      test:
+        - CMD-SHELL
+        - 'ps aux | grep [s]idekiq'
       interval: 20s
       timeout: 20s
       retries: 10
-
   postgres:
     image: 'ghcr.io/fazer-ai/postgres-16-pgvector:latest'
     restart: always
     volumes:
       - 'postgres:/var/lib/postgresql/data'
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-chatwoot_production}
-      - POSTGRES_USER=${SERVICE_USER_POSTGRES}
-      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - 'POSTGRES_DB=${POSTGRES_DB:-chatwoot_production}'
+      - 'POSTGRES_USER=${SERVICE_USER_POSTGRES}'
+      - 'POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test:
+        - CMD-SHELL
+        - 'pg_isready -h localhost -p 5432 -U $${POSTGRES_USER} -d $${POSTGRES_DB}'
       interval: 20s
       timeout: 20s
       retries: 10
-
   redis:
     image: 'redis:alpine'
     restart: always
-    command: ["sh", "-c", "redis-server --requirepass \"${SERVICE_PASSWORD_REDIS}\""]
+    command:
+      - sh
+      - '-c'
+      - 'redis-server --requirepass "${SERVICE_PASSWORD_REDIS}"'
     volumes:
       - 'redis:/data'
     environment:
-      - REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}
+      - 'REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}'
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -h localhost -p 6379 -a $${REDIS_PASSWORD} ping"]
+      test:
+        - CMD-SHELL
+        - 'redis-cli -h localhost -p 6379 -a $${REDIS_PASSWORD} ping'
       interval: 20s
       timeout: 20s
       retries: 10
-
   baileys-api:
     image: 'ghcr.io/fazer-ai/baileys-api:latest'
     pull_policy: always
@@ -119,20 +144,26 @@ services:
       - 'storage:/app/storage'
     environment:
       - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379
-      - REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}
-      - LOG_LEVEL=${LOG_LEVEL:-debug}
-      - BAILEYS_LOG_LEVEL=${BAILEYS_LOG_LEVEL:-error}
-      - BAILEYS_PROVIDER_DEFAULT_API_KEY=${SERVICE_PASSWORD_64_DEFAULTAPIKEY}
-    command: ["sh", "-c", "bun manage-api-keys create user ${SERVICE_PASSWORD_64_DEFAULTAPIKEY} && bun start"]
+      - 'REDIS_URL=redis://redis:6379'
+      - 'REDIS_PASSWORD=${SERVICE_PASSWORD_REDIS}'
+      - 'LOG_LEVEL=${LOG_LEVEL:-debug}'
+      - 'BAILEYS_LOG_LEVEL=${BAILEYS_LOG_LEVEL:-error}'
+      - 'BAILEYS_PROVIDER_DEFAULT_API_KEY=${SERVICE_PASSWORD_64_DEFAULTAPIKEY}'
+    command:
+      - sh
+      - '-c'
+      - 'bun manage-api-keys create user ${SERVICE_PASSWORD_64_DEFAULTAPIKEY} && bun start'
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3025/status"]
+      test:
+        - CMD-SHELL
+        - 'wget -qO- http://localhost:3025/status'
       interval: 20s
       timeout: 20s
       retries: 10
 
+# Adicionado para gerenciar os volumes
 volumes:
-  storage: {}
-  postgres: {}
-  redis: {}
+  postgres:
+  redis:
+  storage:
