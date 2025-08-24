@@ -43,13 +43,6 @@ services:
       - '-b'
       - 0.0.0.0
     restart: always
-    post_start:
-      -
-        command:
-          - sh
-          - '-c'
-          # ALTERAÇÃO 2: Adicionar a limpeza e recompilação dos assets no final
-          - 'bundle exec rails db:chatwoot_prepare && bundle exec rails branding:update && if [ -n "$${BRAND_ASSETS_URL}" ]; then deployment/extract_brand_assets.sh "$${BRAND_ASSETS_URL}"; fi && bundle exec rails assets:clobber && bundle exec rails assets:precompile RAILS_ENV=production'
     healthcheck:
       test:
         - CMD-SHELL
