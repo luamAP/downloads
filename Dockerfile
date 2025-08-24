@@ -1,12 +1,11 @@
-# Dockerfile v3 - Instalando dependências do build
+# Dockerfile v4 - Corrigindo o instalador do pnpm
 FROM ghcr.io/fazer-ai/chatwoot:latest
 
-# A imagem base é minimalista e não tem 'curl'.
-# Primeiro, usamos o gerenciador de pacotes do sistema (apk, para Alpine Linux)
-# para instalar o 'curl'. O '&& \' permite juntar múltiplos comandos em uma só camada.
+# O instalador do pnpm precisa saber qual shell está ativo.
+# Definimos a variável SHELL=sh explicitamente para o comando.
 RUN apk add --no-cache curl && \
-    curl -fsSL https://get.pnpm.io/install.sh | sh -
+    SHELL=sh curl -fsSL https://get.pnpm.io/install.sh | sh -
 
-# O resto continua igual, configurando o PATH para o pnpm
+# O resto continua igual
 ENV PNPM_HOME="/root/.local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
