@@ -13,7 +13,7 @@ URL="https://raw.githubusercontent.com/$GITHUB_USER/$GITHUB_REPO/$BRANCH/$ZIP_PA
 TEMP_DIR=$(mktemp -d)
 ZIP_FILE="$TEMP_DIR/branding.zip"
 EXTRACT_DIR="$TEMP_DIR/extracted_favicons"
-TARGET_DIR="public"
+TARGET_DIR="public/brand-assets"
 
 cleanup() {
   echo "Cleaning up temporary files..."
